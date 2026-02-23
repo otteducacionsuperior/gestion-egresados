@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  contactLogs ContactLog[]
+}
+
+model Graduate {
+  id        String   @id @default(uuid())
+  dni       String   @unique
+  firstName String
+  lastName  String
+  email     String
+  phone     String?
+
+  city      String?
+  country   String?
+
+  graduationYear Int
+  linkedinUrl    String?
+
+  active    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  careers   GraduateCareer[]
+  employmentStatuses EmploymentStatus[]
+  contactLogs ContactLog[]
+}
+
+model Career {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  graduates GraduateCareer[]
+}
+
+model GraduateCareer {
+  graduate   Graduate @relation(fields: [graduateId], references: [id])
+  graduateId String
+
+  career     Career   @relation(fields: [careerId], references: [id])
+  careerId   Int
+
+  @@id([graduateId, careerId])
+}
+
+model EmploymentStatus {
+  id        String   @id @default(uuid())
+
+  graduate   Graduate @relation(fields: [graduateId], references: [id], onDelete: Cascade)
+  graduateId String
+
+  working                  Boolean
+  workingInField           Boolean?
+  company                  String?
+  position                 String?
+  availableForJobs         Boolean @default(false)
+  availableForInternships  Boolean @default(false)
+  mentorInterest           Boolean @default(false)
+  companyAcceptsInterns    Boolean @default(false)
+
+  createdAt DateTime @default(now())
+}
+
+model FormSubmission {
+  id         String   @id @default(uuid())
+  dni        String
+  rawPayload Json
+  processed  Boolean  @default(false)
+  approved   Boolean?
+  createdAt  DateTime @default(now())
+}
+
+model ContactLog {
+  id         String   @id @default(uuid())
+
+  graduate   Graduate @relation(fields: [graduateId], references: [id], onDelete: Cascade)
+  graduateId String
+
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+
+  contactType String?
+  notes       String?
+
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  admin
+  pasantias
+  direccion
+}
