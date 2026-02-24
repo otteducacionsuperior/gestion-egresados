@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Egresado {
+  id           Int       @id @default(autoincrement())
+  dni          String    @unique
+  nombre       String
+  apellido     String
+  email        String?
+  telefono     String?
+  ciudad       String?
+  creadoEn     DateTime  @default(now())
+  actualizadoEn DateTime @updatedAt
+
+  carreras     EgresadoCarrera[]
+  actualizaciones Actualizacion[]
+}
+
+model Carrera {
+  id        Int       @id @default(autoincrement())
+  nombre    String    @unique
+  creadaEn  DateTime  @default(now())
+
+  egresados EgresadoCarrera[]
+}
+
+model EgresadoCarrera {
+  id           Int      @id @default(autoincrement())
+  egresadoId   Int
+  carreraId    Int
+  anioEgreso   Int?
+
+  egresado     Egresado @relation(fields: [egresadoId], references: [id], onDelete: Cascade)
+  carrera      Carrera  @relation(fields: [carreraId], references: [id], onDelete: Cascade)
+
+  @@unique([egresadoId, carreraId])
+}
+
+model Actualizacion {
+  id            Int       @id @default(autoincrement())
+  egresadoId    Int
+  datos         Json
+  estado        EstadoActualizacion @default(PENDIENTE)
+  creadaEn      DateTime  @default(now())
+  revisadaEn    DateTime?
+
+  egresado      Egresado  @relation(fields: [egresadoId], references: [id], onDelete: Cascade)
+}
+
+enum EstadoActualizacion {
+  PENDIENTE
+  APROBADA
+  RECHAZADA
+}
